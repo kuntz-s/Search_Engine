@@ -10,6 +10,7 @@ import {
   useFonts as useRoboto,
   Roboto_400Regular,
 } from "@expo-google-fonts/roboto";
+import { Navigation } from "./src/infrastructure/navigation/index.js";
 import { theme } from "./src/infrastructure/theme/index.js";
 import { SearchContextProvider } from "./src/services/SearchContext.js";
 //import { View, Text } from "react-native";
@@ -26,11 +27,7 @@ export default function App() {
     <>
       <ThemeProvider theme={theme}>
         <SearchContextProvider>
-          <View
-            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-          >
-            <Text> Open up App.js to view files</Text>
-          </View>
+          <Navigation/>
         </SearchContextProvider>
       </ThemeProvider>
       <StatusBar style="auto" />

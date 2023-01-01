@@ -13,8 +13,8 @@ export const SearchContextProvider = ({ children }) => {
   }-${actual.getFullYear()}`;
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(null);
-
   const [searchHistory, setSearchHistory] = useState([]);
+  const [language ,setLanguage] = useState({english:true, french: false});
 
   useEffect(() => {
     createTables();
@@ -55,12 +55,18 @@ export const SearchContextProvider = ({ children }) => {
     });
   };
 
+  const changeLanguage = (language) => {
+    setLanguage(language);
+  }
+
   return (
     <SearchContext.Provider
       value={{
         isLoading,
         isError,
-        searchHistory
+        searchHistory,
+        language,
+        changeLanguage
       }}
     >
       {children}
