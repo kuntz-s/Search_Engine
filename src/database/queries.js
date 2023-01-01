@@ -1,0 +1,1 @@
+export const createSearchHistory = `CREATE TABLE IF NOT EXISTS searchHistory ( id INTEGER PRIMARY KEY AUTOINCREMENT ,jour DATE , searchText VARCHAR(20));`;
