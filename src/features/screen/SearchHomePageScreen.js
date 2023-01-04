@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { SafeArea } from "../../components/utility/SafeAreaComponent";
 import { Searchbar, Button } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
 import { Spacer } from "../../components/utility/SpacerComponent";
 import { SearchContext } from "../../services/SearchContext";
 import { colors } from "../../infrastructure/theme/colors";
@@ -69,16 +70,16 @@ const HistoryTitle = styled(Text)`
 `;
 
 const SuggestionButton = styled(Button).attrs({
-  contentStyle:{
-    justifyContent:"flex-start"
+  contentStyle: {
+    justifyContent: "flex-start",
   },
   labelStyle: {
     fontSize: 20,
     fontFamily: fonts.body,
   },
-  textColor:"#4D4D4D"
+  textColor: "#4D4D4D",
 })`
-  margin-vertical:${(props) => props.theme.space[1]}
+  margin-vertical: ${(props) => props.theme.space[1]};
 `;
 
 const historyConst = [
@@ -88,9 +89,18 @@ const historyConst = [
 ];
 
 export const SearchHomePageScreen = () => {
-  const { changeLanguage, language, searchHistory } = useContext(SearchContext);
+  const { changeLanguage, language, questionsList, handleSearch } =
+    useContext(SearchContext);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState(false);
+  const navigation = useNavigation();
+
+  const handleRedirect = () => {
+    if (searchQuery) {
+      handleSearch(searchQuery);
+      navigation.navigate("Result", { searchQuery });
+    }
+  };
 
   return (
     <SafeArea>
@@ -130,7 +140,7 @@ export const SearchHomePageScreen = () => {
               <SearchButton
                 icon="arrow-right"
                 mode="contained"
-                onPress={() => console.log("Pressed")}
+                onPress={handleRedirect}
               >
                 {language.french ? "Rechercher" : "Search"}
               </SearchButton>
@@ -142,19 +152,69 @@ export const SearchHomePageScreen = () => {
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
+                  display: searchQuery ? "none" : "flex",
                 }}
               >
-                <HistoryTitle touchable={false}>Récents</HistoryTitle>
+                <HistoryTitle touchable={false}>
+                  {language.french ? "Recent" : "Recent"}
+                </HistoryTitle>
                 <TouchableOpacity>
-                  <HistoryTitle touchable={true}>Voir tout</HistoryTitle>
+                  <HistoryTitle touchable={true}>
+                    {language.french ? "Voir tout" : "View all"}
+                  </HistoryTitle>
                 </TouchableOpacity>
               </View>
               {/** liste des historiques  */}
-              {historyConst.slice(0,4).map((history, id) => {
-                return (
-                    <SuggestionButton key={id} icon="clock-outline" mode="text" onPress = {() => {setSearchQuery(history); setSuggestions(false)}}>{history}</SuggestionButton>
-                );
-              })}
+              <View
+                style={{
+                  minHeight: 80,
+                  display: searchQuery ? "none" : "flex",
+                }}
+              >
+                {historyConst.slice(0, 5).map((history, id) => {
+                  return (
+                    <SuggestionButton
+                      key={id}
+                      icon="clock-outline"
+                      mode="text"
+                      onPress={() => {
+                        setSearchQuery(history);
+                      }}
+                    >
+                      {history}
+                    </SuggestionButton>
+                  );
+                })}
+              </View>
+              {/** on affiche la liste des suggestions lorsque l'utilisateur entre une recherche */}
+              <View
+                style={{
+                  display: !searchQuery ? "none" : "flex",
+                }}
+              >
+                {questionsList
+                  .filter((elt) =>
+                    elt.question
+                      .toUpperCase()
+                      .includes(searchQuery.toUpperCase())
+                  )
+                  .slice(0, 5)
+                  .map((elt, id) => {
+                    return (
+                      <SuggestionButton
+                        key={id}
+                        icon="magnify"
+                        mode="text"
+                        onPress={() => {
+                          setSearchQuery(elt.question);
+                          setSuggestions(false);
+                        }}
+                      >
+                        {elt.question}
+                      </SuggestionButton>
+                    );
+                  })}
+              </View>
             </SuggestionsWrapper>
           )}
         </SearchWrapper>

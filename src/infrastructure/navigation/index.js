@@ -4,6 +4,7 @@ import {
     createStackNavigator
   } from "@react-navigation/stack";
 import { SearchHomePageScreen } from "../../features/screen/SearchHomePageScreen";
+import { ResultScreen } from "../../features/screen/ResultScreen";
 
 const AppStack = createStackNavigator();
 
@@ -17,6 +18,13 @@ export const Navigation = () => {
                       }}
                       name="HomePage"
                       component={SearchHomePageScreen}
+                />
+                 <AppStack.Screen
+                     options={{
+                        headerShown: false
+                      }}
+                      name="Result"
+                      component={ResultScreen}
                 />
             </AppStack.Navigator>
         </NavigationContainer>
