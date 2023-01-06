@@ -82,14 +82,9 @@ const SuggestionButton = styled(Button).attrs({
   margin-vertical: ${(props) => props.theme.space[1]};
 `;
 
-const historyConst = [
-  "mon nom est stephane",
-  "quel est ton nom ? ",
-  "quel est notre nom ?",
-];
 
 export const SearchHomePageScreen = () => {
-  const { changeLanguage, language, questionsList, handleSearch } =
+  const { changeLanguage, language, questionsList, handleSearch,insertData, searchHistory } =
     useContext(SearchContext);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState(false);
@@ -98,7 +93,9 @@ export const SearchHomePageScreen = () => {
   const handleRedirect = () => {
     if (searchQuery) {
       handleSearch(searchQuery);
+      insertData(searchQuery);
       navigation.navigate("Result", { searchQuery });
+      setSearchQuery("");
     }
   };
 
@@ -171,17 +168,18 @@ export const SearchHomePageScreen = () => {
                   display: searchQuery ? "none" : "flex",
                 }}
               >
-                {historyConst.slice(0, 5).map((history, id) => {
+                {searchHistory.slice(0, 4).map((history) => {
                   return (
                     <SuggestionButton
-                      key={id}
+                      key={history.id}
                       icon="clock-outline"
                       mode="text"
                       onPress={() => {
-                        setSearchQuery(history);
+                        setSearchQuery(history.searchText);
+                        setSuggestions(false);
                       }}
                     >
-                      {history}
+                      {history.searchText}
                     </SuggestionButton>
                   );
                 })}
@@ -198,7 +196,7 @@ export const SearchHomePageScreen = () => {
                       .toUpperCase()
                       .includes(searchQuery.toUpperCase())
                   )
-                  .slice(0, 5)
+                  .slice(0, 4)
                   .map((elt, id) => {
                     return (
                       <SuggestionButton
@@ -209,6 +207,8 @@ export const SearchHomePageScreen = () => {
                           setSearchQuery(elt.question);
                           setSuggestions(false);
                         }}
+                        compact={true}
+
                       >
                         {elt.question}
                       </SuggestionButton>

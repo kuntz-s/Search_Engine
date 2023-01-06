@@ -6,6 +6,7 @@ import LottieView from "lottie-react-native";
 import { SafeArea } from "../../components/utility/SafeAreaComponent";
 import { Spacer } from "../../components/utility/SpacerComponent";
 import { colors } from "../../infrastructure/theme/colors";
+import { fonts, fontSizes } from "../../infrastructure/theme/fonts";
 import { SearchContext } from "../../services/SearchContext";
 import { getRandomQuestions } from "../../components/Constants";
 import styled from "styled-components";
@@ -64,22 +65,43 @@ const ResultText = styled(Text)`
   font-size: ${(props) => props.theme.fontSizes.title};
   font-family: ${(props) => props.theme.fonts.body};
   font-weight: bold;
-  text-align:center
+  text-align: center;
 `;
+
+const SuggestionWrapper = styled(View)`
+  padding-vertical: ${(props) => props.theme.space[4]};
+`;
+
+const SuggestionText = styled(Text)`
+  font-size: ${(props) => props.theme.fontSizes.title};
+  font-family: ${(props) => props.theme.fonts.body};
+  color:gray;
+  text-align:center;
+`;
+
+const SuggestionButton = styled(Button).attrs({
+  buttonColor: colors.brand.secondary,
+  labelStyle: {
+    fontSize: 15,
+    fontFamily: fonts.body,
+  },
+})``;
 
 export const ResultScreen = ({ route }) => {
   const navigation = useNavigation();
   const { searchQuery } = route.params;
   const [search, setSearch] = useState(searchQuery);
-  const {isLoading, resultQuery, questionsList} = useContext(SearchContext);
+  const { isLoading, resultQuery, questionsList, handleSearch } = useContext(SearchContext);
+  const [suggestionQuestions, setSuggestionQuestions] = useState([]);
 
   useEffect(() => {
-    /*  setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 2000); */
-    getRandomQuestions(questionsList)
+    setSuggestionQuestions(getRandomQuestions(questionsList, searchQuery));
   }, []);
+
+  const handlePress=(text) => {
+    setSearch(text);
+    handleSearch(text);
+  }
 
   return (
     <SafeArea>
@@ -113,38 +135,48 @@ export const ResultScreen = ({ route }) => {
           <ResultWrapper>
             <Spacer position="top" size="small">
               <ResultNumber>
-                Nous avons trouvé {resultQuery.length} résulats correspondant à votre
-                recherche
+                Nous avons trouvé {resultQuery.length} résulats correspondant à
+                votre recherche
               </ResultNumber>
             </Spacer>
             <Spacer position="top" size="large">
-             {
-                resultQuery.length === 0 && (
-                    <ResultTextWrapper>
-                    <ResultText>Aucun résultat trouvé </ResultText>
-                  </ResultTextWrapper>
-                )
-             }
-             {
-                resultQuery.length > 0 && (
-                  resultQuery.map((elt) => {
-                        return(
-                           <Spacer position="bottom" size="medium" key={elt.id}>
-                             <ResultTextWrapper >
-                    <ResultText>{elt.answer} </ResultText>
-                  </ResultTextWrapper></Spacer>
-                        )
-                    } )
-                )
-             }
+              {resultQuery.length === 0 && (
+                <ResultTextWrapper>
+                  <ResultText>Aucun résultat trouvé </ResultText>
+                </ResultTextWrapper>
+              )}
+              {resultQuery.length > 0 &&
+                resultQuery.map((elt) => {
+                  return (
+                    <Spacer position="bottom" size="medium" key={elt.id}>
+                      <ResultTextWrapper>
+                        <ResultText>{elt.answer} </ResultText>
+                      </ResultTextWrapper>
+                    </Spacer>
+                  );
+                })}
             </Spacer>
+            <SuggestionWrapper>
+              <Spacer position="bottom" size="medium">
+                <SuggestionText>Quelques Suggestions</SuggestionText>
+              </Spacer>
+              {suggestionQuestions.map((elt,id) => {
+                return (
+                  <Spacer position="bottom" size="medium" key={id}>
+                    <SuggestionButton
+                      mode="contained"
+                      onPress={() => {
+                        handlePress(elt.question);
+                      }}
+                    >
+                      {elt.question}
+                    </SuggestionButton>
+                  </Spacer>
+                );
+              })}
+            </SuggestionWrapper>
           </ResultWrapper>
         )}
-
-
-       
-
-        
       </Wrapper>
     </SafeArea>
   );

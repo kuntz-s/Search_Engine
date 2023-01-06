@@ -20,11 +20,34 @@ export const SearchContextProvider = ({ children }) => {
   const [questionsList, setQuestionsList] = useState([]);
   const [answersList, setAnswersList] = useState([]);
   const [resultQuery, setResultQuery] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     createTables();
+    
+    const getApiCall = async () => {
+      const questions = await axios.get(
+        "https://dev-a39wny19cs68266.api.raw-labs.com/search-engine"
+      );
+      const answers = await axios.get(
+        "https://dev-a39wny19cs68266.api.raw-labs.com/database-answers"
+      );
+      if (questions.status === 200) {
+        console.log("questions loaded successfuly");
+        setQuestionsList(questions.data);
+      }
+
+      if (answers.status === 200) {
+        console.log("answers loaded successfully");
+        setAnswersList(answers.data);
+      }
+    };
+    getApiCall();
+  }, []);
+
+  
+  useEffect(() => {
     const getSearchHistory = () => {
-      setIsLoading(true);
       db.transaction((txn) => {
         txn.executeSql(
           `SELECT * FROM searchHistory ORDER BY id DESC`,
@@ -41,24 +64,9 @@ export const SearchContextProvider = ({ children }) => {
       });
     };
 
-    const getApiCall = async () => {
-      const questions = await axios.get(
-        "https://dev-a39wny19cs68266.api.raw-labs.com/search-engine"
-      );
-      const answers = await axios.get(
-        "https://dev-a39wny19cs68266.api.raw-labs.com/database-answers"
-      );
-      if (questions.status === 200) {
-        setQuestionsList(questions.data);
-      }
-
-      if (answers.status === 200) {
-        setAnswersList(answers.data);
-      }
-    };
     getSearchHistory();
-    getApiCall();
-  }, []);
+
+  },[searchLoading])
 
   const createTables = () => {
     db.transaction((txn) => {
@@ -77,6 +85,28 @@ export const SearchContextProvider = ({ children }) => {
     });
   };
 
+  
+  const insertData = (searchQuery) => {
+    
+    setSearchLoading(true);
+    db.transaction((txn) => {
+      txn.executeSql(
+        `INSERT INTO searchHistory (jour, searchText) VALUES(?,?)`,
+        [today, searchQuery],
+        (sqlTxn, res) => {
+          console.log( `history inserted successfuly`);
+          
+    
+    setSearchLoading(false);
+        },
+        (error) => {
+          console.log(
+            "une erreur survenue lors de l'insertion de la table searchHistory" + error.message
+          );}
+      );
+    });
+  };
+
   const handleSearch = (searchQuery) => {
     setIsLoading(true);
     let finalResult = [];
@@ -86,33 +116,50 @@ export const SearchContextProvider = ({ children }) => {
     );
     if (questionFound) {
       let result = [];
-      //on parcours la liste des réponses et on vérifie si une entité de la question est un mot clé des réponses
-      for (let questionElement of questionFound.entity) {
-        for (let answer of answersList) {
-          const answerFound = answer.keywords.find((elt) =>
-            elt.toUpperCase().includes(questionElement.toUpperCase())
-          );
-          if (answerFound) {
-            result.push(answer);
-          }
+      //Etape 1 : on parcours et on trie la liste des réponses en fonction du type de réponse recherché
+      const questionType = getType(questionFound.question);
+      let matching = null;
+      for(let answer of answersList){
+        matching = answer.keywords.find(elt => elt.toUpperCase() === questionType.toUpperCase());
+        if(matching){
+          result.push(answer);
         }
-      }
-      const searchType = getType(searchQuery);
-      //on filtre les résultats en fonction du type de recherche
-      if (searchType) {
-        for (let res of result) {
-          const temp = res.keywords.find((elt) =>
-            elt.toLowerCase().includes(searchType.toLowerCase())
-          );
-          if (temp) {
-            finalResult.push(res);
-          }
-        }
-      } else {
-        finalResult = result;
       }
 
-      // console.log(result);
+      //on vérifie si il n'ya eu aucun matching du tout dans ce cas on met le resultat à toute la BD de réponses
+      if(result.length === 0){
+        result = answersList;
+      }
+
+      //Etape 2 : on parcours la liste des réponses et on vérifie si sa relation existe dans le tableau
+      let newResult = []; 
+      matching = null;
+      for(let elt of result){
+        for(let relation of questionFound.relation){
+          matching = elt.keywords.find(elt => elt.toUpperCase().includes(relation.toUpperCase()));
+          if(matching){
+            newResult.push(elt);
+          }
+          break;
+        }
+      }
+
+      //on vérifie si le newResult est vide si c'est le cas on remet la valeur de result 
+      if(newResult.length ===0){
+        newResult = result;
+      }
+
+      //Etape 3: on parcours la liste des entités de question pour voir une équivalence
+      matching = null;
+      for(let final of newResult ){
+        for(let entity of questionFound.entity){
+          const matching = final.keywords.find((elt) => elt.toUpperCase().includes(entity.toUpperCase()));
+          if(matching){
+            finalResult.push(final);
+          }
+        }
+      }
+
     } else {
       let result = [];
       //on parcours la liste des réponses et on vérifie si leurs mots clés font partie de phrase
@@ -162,6 +209,7 @@ export const SearchContextProvider = ({ children }) => {
         questionsList,
         answersList,
         resultQuery,
+        insertData,
         changeLanguage,
         handleSearch,
       }}
