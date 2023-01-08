@@ -5,6 +5,7 @@ import {
   } from "@react-navigation/stack";
 import { SearchHomePageScreen } from "../../features/screen/SearchHomePageScreen";
 import { ResultScreen } from "../../features/screen/ResultScreen";
+import { LossInternetScreen } from "../../features/screen/LossInternetScreen";
 
 const AppStack = createStackNavigator();
 
@@ -25,6 +26,13 @@ export const Navigation = () => {
                       }}
                       name="Result"
                       component={ResultScreen}
+                />
+                 <AppStack.Screen
+                     options={{
+                        headerShown: false
+                      }}
+                      name="LossInternet"
+                      component={LossInternetScreen}
                 />
             </AppStack.Navigator>
         </NavigationContainer>

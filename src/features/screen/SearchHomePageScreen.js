@@ -1,8 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { SafeArea } from "../../components/utility/SafeAreaComponent";
 import { Searchbar, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
+import {useNetInfo} from "@react-native-community/netinfo";
 import { Spacer } from "../../components/utility/SpacerComponent";
 import { SearchContext } from "../../services/SearchContext";
 import { colors } from "../../infrastructure/theme/colors";
@@ -89,6 +90,14 @@ export const SearchHomePageScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState(false);
   const navigation = useNavigation();
+  const netInfo = useNetInfo();
+
+  useEffect(() => {
+    console.log("net info " ,netInfo.isConnected);
+    if(!netInfo.isConnected){
+      navigation.navigate("LossInternet")
+    }
+  },[netInfo])
 
   const handleRedirect = () => {
     if (searchQuery) {
@@ -148,18 +157,12 @@ export const SearchHomePageScreen = () => {
               <View
                 style={{
                   flexDirection: "row",
-                  justifyContent: "space-between",
                   display: searchQuery ? "none" : "flex",
                 }}
               >
                 <HistoryTitle touchable={false}>
-                  {language.french ? "Recent" : "Recent"}
+                  {language.french ? "Historique récent " : "Recent history"}
                 </HistoryTitle>
-                <TouchableOpacity>
-                  <HistoryTitle touchable={true}>
-                    {language.french ? "Voir tout" : "View all"}
-                  </HistoryTitle>
-                </TouchableOpacity>
               </View>
               {/** liste des historiques  */}
               <View

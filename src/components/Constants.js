@@ -27,7 +27,7 @@ export const getRandomQuestions = (questionsList, searchQuery) => {
             break;
         }
     }
-    if(newQuestionsList.length === 0 ){
+    if(newQuestionsList.length < 7 ){
         newQuestionsList = questionsList;
     }
     const randQuestions = [];
