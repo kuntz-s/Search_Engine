@@ -3,6 +3,7 @@ import axios from "axios";
 import * as SQLite from "expo-sqlite";
 import { getType } from "../components/Constants";
 import { createSearchHistory } from "../database/queries";
+import {useNetInfo} from "@react-native-community/netinfo";
 
 let actual = new Date();
 const db = SQLite.openDatabase("db.db");
@@ -21,29 +22,42 @@ export const SearchContextProvider = ({ children }) => {
   const [answersList, setAnswersList] = useState([]);
   const [resultQuery, setResultQuery] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [apiLoaded, SetApiLoaded]= useState({questions:false, answers:false});
+  const netInfo = useNetInfo();
+
 
   useEffect(() => {
     createTables();
-    
-    const getApiCall = async () => {
-      const questions = await axios.get(
-        "https://dev-a39wny19cs68266.api.raw-labs.com/search-engine"
-      );
-      const answers = await axios.get(
-        "https://dev-a39wny19cs68266.api.raw-labs.com/database-answers"
-      );
-      if (questions.status === 200) {
-        console.log("questions loaded successfuly");
-        setQuestionsList(questions.data);
-      }
-
-      if (answers.status === 200) {
-        console.log("answers loaded successfully");
-        setAnswersList(answers.data);
-      }
-    };
-    getApiCall();
   }, []);
+
+  useEffect(() => {
+    if(questionsList.length === 0 && answersList.length === 0){
+      SetApiLoaded({questions:true, answers:true})
+     
+      console.log("before", apiLoaded);
+     const getApiCall = async () => {
+       const questions = await axios.get(
+         "https://dev-a39wny19cs68266.api.raw-labs.com/search-engine"
+       );
+       const answers = await axios.get(
+         "https://dev-a39wny19cs68266.api.raw-labs.com/database-answers"
+       );
+       if (questions.status === 200) {
+         console.log("questions loaded successfuly");
+         SetApiLoaded((prev)=> ({questions:false,answers:prev.answers}))
+         setQuestionsList(questions.data);
+       }
+ 
+       if (answers.status === 200) {
+         console.log("answers loaded successfully");
+         SetApiLoaded((prev)=> ({questions:prev.questions,answers:false}))
+         setAnswersList(answers.data);
+       }
+       console.log("after", apiLoaded);
+     };
+     getApiCall();
+    }
+  },[netInfo.isConnected, questionsList, answersList])
 
   
   useEffect(() => {
@@ -209,6 +223,7 @@ export const SearchContextProvider = ({ children }) => {
         questionsList,
         answersList,
         resultQuery,
+        apiLoaded,
         insertData,
         changeLanguage,
         handleSearch,

@@ -1,9 +1,9 @@
 import React, { useState, useContext, useEffect } from "react";
 import { View, Text, TouchableOpacity, Image } from "react-native";
 import { SafeArea } from "../../components/utility/SafeAreaComponent";
-import { Searchbar, Button } from "react-native-paper";
+import { Searchbar, Button, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
-import {useNetInfo} from "@react-native-community/netinfo";
+import { useNetInfo } from "@react-native-community/netinfo";
 import { Spacer } from "../../components/utility/SpacerComponent";
 import { SearchContext } from "../../services/SearchContext";
 import { colors } from "../../infrastructure/theme/colors";
@@ -83,21 +83,26 @@ const SuggestionButton = styled(Button).attrs({
   margin-vertical: ${(props) => props.theme.space[1]};
 `;
 
-
 export const SearchHomePageScreen = () => {
-  const { changeLanguage, language, questionsList, handleSearch,insertData, searchHistory } =
-    useContext(SearchContext);
+  const {
+    changeLanguage,
+    language,
+    questionsList,
+    handleSearch,
+    insertData,
+    searchHistory,
+    apiLoaded,
+  } = useContext(SearchContext);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState(false);
   const navigation = useNavigation();
   const netInfo = useNetInfo();
 
   useEffect(() => {
-    console.log("net info " ,netInfo.isConnected);
-    if(!netInfo.isConnected){
-      navigation.navigate("LossInternet")
+    if (!netInfo.isConnected) {
+      navigation.navigate("LossInternet");
     }
-  },[netInfo])
+  }, [netInfo]);
 
   const handleRedirect = () => {
     if (searchQuery) {
@@ -133,16 +138,20 @@ export const SearchHomePageScreen = () => {
         </LanguageWrapper>
         <SearchWrapper>
           <ImageIllustration source={require(`../../image/searchIcon1.png`)} />
-          <Search
-            suggestions={suggestions}
-            elevation={2}
-            onChangeText={(text) => setSearchQuery(text)}
-            value={searchQuery}
-            onPressIn={() => setSuggestions(true)}
-            onEndEditing={() => setSuggestions(false)}
-          />
-          {!suggestions && (
-            <Spacer position="top" size="large">
+
+          {/**on affiche lorsque les données ont été chargé des api */}
+          {!apiLoaded.questions && !apiLoaded.answers && (
+            <Search
+              suggestions={suggestions}
+              elevation={2}
+              onChangeText={(text) => setSearchQuery(text)}
+              value={searchQuery}
+              onPressIn={() => setSuggestions(true)}
+              onEndEditing={() => setSuggestions(false)}
+            />
+          )}
+          {!suggestions && !apiLoaded.questions && !apiLoaded.answers && (
+            <Spacer position="top" size="large" style={{ display: "none" }}>
               <SearchButton
                 icon="arrow-right"
                 mode="contained"
@@ -152,6 +161,23 @@ export const SearchHomePageScreen = () => {
               </SearchButton>
             </Spacer>
           )}
+
+          {/**on affiche lorsque les données sont en préchargement */}
+          {apiLoaded.questions && apiLoaded.answers && (
+            <View>
+              <ActivityIndicator
+                animating={true}
+                color={colors.brand.primary}
+                size="large"
+              />
+              <Spacer position="top" size="medium">
+                <Text style={{ fontSize: 18 }}>
+                  Chagement des données veuillez patienter ...
+                </Text>
+              </Spacer>
+            </View>
+          )}
+
           {suggestions && (
             <SuggestionsWrapper elevation={1}>
               <View
@@ -211,7 +237,6 @@ export const SearchHomePageScreen = () => {
                           setSuggestions(false);
                         }}
                         compact={true}
-
                       >
                         {elt.question}
                       </SuggestionButton>
